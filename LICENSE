@@ -1,0 +1,9 @@
+Usage: license [options] [command]
+
+Options:
+  -h, --help      This message
+
+Commands:
+  mit             The MIT License
+  apache2         The Apache License 2.0
+  gpl2            The GNU General Public License 2.0
