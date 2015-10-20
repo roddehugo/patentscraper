@@ -8,7 +8,7 @@
 from scrapy import Item, Field
 
 
-class GpatentsItem(Item):
+class GooglePatentsItem(Item):
     uid = Field()
     title = Field()
     inventor = Field()
