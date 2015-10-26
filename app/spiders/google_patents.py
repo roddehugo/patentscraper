@@ -77,6 +77,7 @@ class GooglePatentsSpider(Spider):
     def parse(self, response):
         try:
             results = json.loads(response.body_as_unicode())['results']
+            logger.info('Parsing page %d of %s', results['num_page'], results['total_num_pages'])
         except KeyError, e:
             logger.exception(e)
             yield None
