@@ -125,3 +125,4 @@ pip-selfcheck.json
 # sftp configuration file
 sftp-config.json
 
+venv/
