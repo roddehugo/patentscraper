@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
+import urllib
 from scrapy.spiders import Spider
 from scrapy.http import Request
 
@@ -11,64 +12,75 @@ logger = logging.getLogger(__name__)
 
 
 class GooglePatentsSpider(Spider):
-    name = "google_patents"
+    name = 'google_patents'
     allowed_domaines = ['patents.google.com']
-    start_urls = [
-        'https://patents.google.com/xhr/query?q=%7B%22kg%22%3A%5B%7B%22kw%22%3A%5B%7B%22text%22%3A%22'
-        'stirling%20engine%22%7D%5D%7D%5D%2C%22clustered_restrict%22%3Afalse%7D&exp='
-    ]
+    search_url = 'https://patents.google.com/xhr/query?%s'
+    patent_url = 'https://patents.google.com/xhr/result?patent_id=%s'
+    image_url = 'https://patentimages.storage.googleapis.com/%s'
     query = {
-        'kg':[
-            { 'kw':[
-                { 'text':'stirling'
-                 },{ 'text':'heating' }
-            ]
-            },{ 'kw':[
-                { 'text':'engine'
-                 },{ 'text':'generator'
-                    },{ 'text':'machine'
-                       },{ 'text':'system'}
-            ]
-            },{ 'kw':[
-                { 'text':'home'
-                 },{ 'text':'house'
-                    },{ 'text':'habitat'
-                       },{ 'text':'domestic' }
-            ]
-            },{ 'kw':[
-                { 'text':'energy'
-                 },{ 'text':'electricity'
-                    },{ 'text':'electric'
-                       },{ 'text':'current supply'}
-            ]
-            },{ 'kw':[
-                { 'text':'kilowatt'
-                 },{ 'text':'1kW'}
-            ]
-            },{
-                'kw':[
-                    {
-                        'text':'independant'
-                    }
-                ]
-            },{
-                'kw':[
-                    {
-                        'text':'-vehicle'
-                    }
-                ]
-            }
-        ],
-        'clustered_restrict':false,
-        'page':1
+        'q': {
+            'kg': [
+                {'kw': [
+                    {'text': 'stirling'},
+                    {'text': 'heating'}]},
+                {'kw': [
+                    {'text': 'engine'},
+                    {'text': 'generator'},
+                    {'text': 'machine'},
+                    {'text': 'system'}]},
+                {'kw': [
+                    {'text': 'home'},
+                    {'text': 'house'},
+                    {'text': 'habitat'},
+                    {'text': 'domestic'}]},
+                {'kw': [
+                    {'text': 'energy'},
+                    {'text': 'electricity'},
+                    {'text': 'electric'},
+                    {'text': 'current supply'}]},
+                {'kw': [
+                    {'text': 'kilowatt'},
+                    {'text': '1kW'}]},
+                {'kw': [
+                    {'text': 'independant'}]},
+                {'kw': [
+                    {'text': '-vehicle'}]}
+            ],
+            'clustered_restrict': False,
+            'page': 0
+        }
     }
 
-    def parse(self, response):
+    def query_string(self, query):
+        return urllib.urlencode(query).replace('%27', '%22').replace('+', '').replace('False', 'false')
+
+    def start_requests(self):
+        yield Request(
+            url=self.search_url % self.query_string(self.query),
+            callback=self.parse_page
+        )
+
+    def parse_page(self, response):
         try:
             results = json.loads(response.body_as_unicode())['results']
         except KeyError, e:
             logger.exception(e)
-            return
+
+        for page in range(0, results['total_num_pages']):
+            query = self.query
+            query['q']['page'] = page
+            yield Request(
+                url=self.search_url % self.query_string(query),
+                callback=self.parse
+            )
+
+    def parse(self, response):
+        try:
+            results = json.loads(response.body_as_unicode())['results']
+            logger.info('Parsing page %d of %s', results['num_page'], results['total_num_pages'])
+        except KeyError, e:
+            logger.exception(e)
+            yield None
 
         clusters = results.pop('cluster')
         for cluster in clusters:
@@ -88,7 +100,7 @@ class GooglePatentsSpider(Spider):
 
                 if patent_number:
                     yield Request(
-                        url="https://patents.google.com/xhr/result?patent_id=%s&lang=en&exp=" % patent_number,
+                        url=self.patent_url % patent_number,
                         callback=self.parse_patent,
                         meta={'patent': patent}
                     )
@@ -108,7 +120,7 @@ class GooglePatentsSpider(Spider):
             loader.add_value('grant_date', patent['grant_date'])
         except KeyError, e:
             logger.error(e)
-            return
+            return None
 
         loader.add_css('inventors', '.important-people a[add-inventor]::text')
         loader.add_css('assignees', '.important-people a[add-assignee]::text')
@@ -119,7 +131,7 @@ class GooglePatentsSpider(Spider):
         try:
             images = json.loads(images[0])
             for img in images:
-                loader.add_value('images', 'https://patentimages.storage.googleapis.com/%s' % img)
+                loader.add_value('images', self.image_url % img)
         except (IndexError, ValueError), e:
             pass
 
@@ -141,4 +153,3 @@ class GooglePatentsSpider(Spider):
         loader.add_css('claims', '#claimsText *::text')
 
         return loader.load_item()
-
