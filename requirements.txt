@@ -5,6 +5,7 @@ cryptography==1.0.2
 cssselect==0.9.1
 decorator==4.0.4
 enum34==1.0.4
+GephiStreamer==1.0.2
 gnureadline==6.3.3
 idna==2.0
 ipaddress==1.0.14
