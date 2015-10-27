@@ -4,9 +4,15 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+import logging
 import pymongo
+from requests.exceptions import ConnectionError
 from scrapy.exceptions import DropItem, CloseSpider
 from GephiStreamer import Node, Edge, GephiStreamerManager
+
+
+logger = logging.getLogger(__name__)
+
 
 class DuplicatesPipeline(object):
 
@@ -36,6 +42,7 @@ class GephiPipeline(object):
 
     def open_spider(self, spider):
         self.gephi = GephiStreamerManager(iGephiUrl=self.gephi_uri, iGephiWorkspace=self.gephi_ws)
+        logger.info('GephiStream connected %s', self.gephi)
 
     def close_spider(self, spider):
         pass
@@ -53,29 +60,33 @@ class GephiPipeline(object):
         except KeyError:
             pass
 
-        for citation in item['citations']:
+        for citation in item.get('citations'):
             citation_node = Node(citation, **patent_color)
             self.gephi.add_node(citation_node)
             self.gephi.add_edge(Edge(patent_node, citation_node, True))
 
-        for cited_by in item['cited_by']:
+        for cited_by in item.get('cited_by'):
             cited_by_node = Node(cited_by, **patent_color)
             self.gephi.add_node(cited_by_node)
             self.gephi.add_edge(Edge(cited_by_node, patent_node, True))
 
         inventor_color = {'red': 1, 'green': 0, 'blue': 0}
-        for inventor in item['inventors']:
+        for inventor in item.get('inventors'):
             inventor_node = Node(inventor, **inventor_color)
             self.gephi.add_node(inventor_node)
             self.gephi.add_edge(Edge(patent_node, inventor_node, False))
 
-        assignee_color = {'red': 1, 'green': 0, 'blue': 0}
-        for assignee in item['assignees']:
+        assignee_color = {'red': 0, 'green': 1, 'blue': 0}
+        for assignee in item.get('assignees'):
             assignee_node = Node(assignee, **assignee_color)
             self.gephi.add_node(assignee_node)
             self.gephi.add_edge(Edge(patent_node, assignee_node, False))
 
-        import ipdb; ipdb.set_trace() ### XXX BREAKPOINT
+        try:
+            self.gephi.commit()
+        except ConectionError, e:
+            logger.error(e)
+
         return item
 
 
