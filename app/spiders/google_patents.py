@@ -15,7 +15,7 @@ class GooglePatentsSpider(Spider):
     name = 'google_patents'
     allowed_domaines = ['patents.google.com']
     search_url = 'https://patents.google.com/xhr/query?%s'
-    patent_url = 'https://patents.google.com/xhr/result?patent_id=%s'
+    patent_url = 'https://patents.google.com/xhr/result?lang=en&patent_id=%s'
     image_url = 'https://patentimages.storage.googleapis.com/%s'
     query = {
         'q': {
@@ -55,31 +55,17 @@ class GooglePatentsSpider(Spider):
         return urllib.urlencode(query).replace('%27', '%22').replace('+', '').replace('False', 'false')
 
     def start_requests(self):
-        yield Request(
-            url=self.search_url % self.query_string(self.query),
-            callback=self.parse_page
-        )
-
-    def parse_page(self, response):
-        try:
-            results = json.loads(response.body_as_unicode())['results']
-        except KeyError, e:
-            logger.exception(e)
-
-        for page in range(0, results['total_num_pages']):
+        for page in range(0, 100):
             query = self.query
             query['q']['page'] = page
-            yield Request(
-                url=self.search_url % self.query_string(query),
-                callback=self.parse
-            )
+            yield self.make_requests_from_url(self.search_url % self.query_string(query))
 
     def parse(self, response):
         try:
             results = json.loads(response.body_as_unicode())['results']
-            logger.info('Parsing page %d of %s', results['num_page'], results['total_num_pages'])
+            logger.info('Parsing page %d', results['num_page'])
         except KeyError, e:
-            logger.exception(e)
+            logger.error(e)
             yield None
 
         clusters = results.pop('cluster')
@@ -87,7 +73,7 @@ class GooglePatentsSpider(Spider):
             try:
                 patents = cluster['result']
             except KeyError, e:
-                logger.exception(e)
+                logger.error(e)
                 continue
 
             for patent in patents:
@@ -95,32 +81,30 @@ class GooglePatentsSpider(Spider):
                     patent = patent['patent']
                     patent_number = patent['publication_number']
                 except KeyError, e:
-                    logger.exception(e)
+                    logger.error(e)
                     continue
 
                 if patent_number:
                     yield Request(
                         url=self.patent_url % patent_number,
-                        callback=self.parse_patent,
-                        meta={'patent': patent}
+                        callback=self.parse_patent
                     )
 
     def parse_patent(self, response):
-        patent = response.meta['patent']
         loader = GooglePatentsLoader(response=response)
 
+        loader.add_css('publication_number', '.knowledge-card h2::text')
+        loader.add_css('title', '#title::text')
+        logger.info('Parsing patent %s', loader.get_output_value('publication_number'))
+
+        dates = loader.get_css('.key-dates dd *::text')
         try:
-            loader.add_value('language', patent['language'])
-            loader.add_value('country_code', patent['country_code'])
-            loader.add_value('publication_number', patent['publication_number'])
-            loader.add_value('title', patent['title'])
-            loader.add_value('filing_date', patent['filing_date'])
-            loader.add_value('publication_date', patent['publication_date'])
-            loader.add_value('priority_date', patent['priority_date'])
-            loader.add_value('grant_date', patent['grant_date'])
-        except KeyError, e:
-            logger.error(e)
-            return None
+            loader.add_value('filing_date', dates[0])
+            loader.add_value('publication_date', dates[3])
+            loader.add_value('priority_date', dates[4])
+            loader.add_value('grant_date', dates[5])
+        except IndexError:
+            pass
 
         loader.add_css('inventors', '.important-people a[add-inventor]::text')
         loader.add_css('assignees', '.important-people a[add-assignee]::text')
@@ -132,7 +116,7 @@ class GooglePatentsSpider(Spider):
             images = json.loads(images[0])
             for img in images:
                 loader.add_value('images', self.image_url % img)
-        except (IndexError, ValueError), e:
+        except (IndexError, ValueError):
             pass
 
         classes = loader.get_css('#classifications *::attr("classes")')
@@ -141,7 +125,7 @@ class GooglePatentsSpider(Spider):
             for classification in classes:
                 leaf = classification[-1]
                 loader.add_value('classifications', (leaf['Code'], leaf['Description']))
-        except (IndexError, ValueError), e:
+        except (IndexError, ValueError):
             pass
 
         loader.add_css('citations', '#patentCitations+table tbody td a::text')
@@ -152,4 +136,14 @@ class GooglePatentsSpider(Spider):
         loader.add_css('description', '#descriptionText *::text')
         loader.add_css('claims', '#claimsText *::text')
 
-        return loader.load_item()
+        patents_linked = \
+            loader.get_output_value('citations') + \
+            loader.get_output_value('cited_by')
+
+        for patent_number in patents_linked:
+            yield Request(
+                url=self.patent_url % patent_number,
+                callback=self.parse_patent
+            )
+
+        yield loader.load_item()

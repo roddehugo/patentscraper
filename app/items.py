@@ -9,8 +9,6 @@ from scrapy import Item, Field
 
 
 class GooglePatentsItem(Item):
-    language = Field()
-    country_code = Field()
     publication_number = Field()
     title = Field()
     filing_date = Field()

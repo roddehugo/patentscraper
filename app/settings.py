@@ -37,32 +37,36 @@ NEWSPIDER_MODULE = 'app.spiders'
 
 # Override the default request headers:
 # DEFAULT_REQUEST_HEADERS = {
-  # 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  # 'Accept-Language': 'en',
+    # 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    # 'Accept-Language': 'en',
 # }
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {
-   # 'app.middlewares.MyCustomSpiderMiddleware': 543,
+    # 'app.middlewares.MyCustomSpiderMiddleware': 543,
 # }
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 # DOWNLOADER_MIDDLEWARES = {
-   # 'app.middlewares.MyCustomDownloaderMiddleware': 543,
+    # 'app.middlewares.MyCustomDownloaderMiddleware': 543,
 # }
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
-# EXTENSIONS = {
-   # 'scrapy.telnet.TelnetConsole': None,
-# }
+EXTENSIONS = {
+    'scrapy.telnet.TelnetConsole': 500,
+    'scrapy.extensions.corestats.CoreStats': 500,
+    'scrapy.extensions.logstats.LogStats': 500,
+    'scrapy.extensions.closespider.CloseSpider': 500
+}
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'app.pipelines.GooglePatentsPipeline': 300,
+    'app.pipelines.DuplicatesPipeline': 100,
+    'app.pipelines.MongoPipeline': 300
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -83,3 +87,8 @@ ITEM_PIPELINES = {
 # HTTPCACHE_DIR='httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES=[]
 # HTTPCACHE_STORAGE='scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+MONGO_URI = '127.0.0.1:27017'
+MONGO_DATABASE = 'patents'
+
+CLOSESPIDER_ITEMCOUNT = 1000
