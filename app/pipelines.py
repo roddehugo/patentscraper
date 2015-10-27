@@ -7,7 +7,7 @@
 import logging
 import pymongo
 from requests.exceptions import ConnectionError
-from scrapy.exceptions import DropItem, CloseSpider
+from scrapy.exceptions import DropItem
 from GephiStreamer import Node, Edge, GephiStreamerManager
 
 
@@ -48,7 +48,7 @@ class GephiPipeline(object):
         pass
 
     def process_item(self, item, spider):
-        patent_args = {'size': 10, 'red': 0, 'green': 0, 'blue': 1}
+        patent_args = {'size': 5, 'red': 0, 'green': 0, 'blue': 1}
         patent_node = Node(item['publication_number'], **patent_args)
         patent_node.property['title'] = item.get('title')
         patent_node.property['filing_date'] = item.get('filing_date')
@@ -81,15 +81,13 @@ class GephiPipeline(object):
 
         try:
             self.gephi.commit()
-        except ConectionError, e:
+        except ConnectionError, e:
             logger.error(e)
 
         return item
 
 
 class MongoPipeline(object):
-
-    collection_name = 'items'
 
     def __init__(self, mongo_uri, mongo_db):
         self.mongo_uri = mongo_uri
@@ -105,6 +103,7 @@ class MongoPipeline(object):
     def open_spider(self, spider):
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
+        self.collection_name = spider.name
 
     def close_spider(self, spider):
         self.client.close()

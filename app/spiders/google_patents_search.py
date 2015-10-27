@@ -22,7 +22,7 @@ class GooglePatentsSearchSpider(Spider):
             'kg': [
                 {'kw': [
                     {'text': 'stirling engine'},
-                    {'text': 'heat and power unit'},
+                    {'text': 'heat and power unit'}]},
                 {'kw': [
                     {'text': 'domestic'}]},
                 {'kw': [

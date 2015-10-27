@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-import urllib
 from scrapy.spiders import Spider
-from scrapy.http import Request
 
 from app.loaders import GooglePatentsLoader
 
@@ -17,14 +15,14 @@ class GooglePatentsInitialSpider(Spider):
     patent_url = 'https://patents.google.com/xhr/result?lang=en&patent_id=%s'
     image_url = 'https://patentimages.storage.googleapis.com/%s'
     interesting_patents = [
-      'US20110025055A1',
-      'US4498298A',
-      'CA2468459A1'
+        'US20110025055A1',
+        'US4498298A',
+        'CA2468459A1'
     ]
 
     def start_requests(self):
-        for patent in self.interesting_patents:
-            yield self.make_requests_from_url(self.patent_url % patent)
+        for patent_number in self.interesting_patents:
+            yield self.make_requests_from_url(self.patent_url % patent_number)
 
     def parse(self, response):
         loader = GooglePatentsLoader(response=response)
@@ -77,9 +75,6 @@ class GooglePatentsInitialSpider(Spider):
             loader.get_output_value('cited_by')
 
         for patent_number in patents_linked:
-            yield Request(
-                url=self.patent_url % patent_number,
-                callback=self.parse_patent
-            )
+            yield self.make_requests_from_url(self.patent_url % patent_number)
 
         yield loader.load_item()
