@@ -66,6 +66,7 @@ EXTENSIONS = {
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'app.pipelines.DuplicatesPipeline': 100,
+    'app.pipelines.GephiPipeline': 200,
     'app.pipelines.MongoPipeline': 300
 }
 
@@ -88,7 +89,13 @@ ITEM_PIPELINES = {
 # HTTPCACHE_IGNORE_HTTP_CODES=[]
 # HTTPCACHE_STORAGE='scrapy.extensions.httpcache.FilesystemCacheStorage'
 
+# Configure Mongo Database to store items in MongoPipeline
 MONGO_URI = '127.0.0.1:27017'
 MONGO_DATABASE = 'patents'
 
+# Configure CloseSpider Pipeline
 CLOSESPIDER_ITEMCOUNT = 1000
+
+# Configure GephiStreamer in GephiPipeline
+GEPHI_URI = '127.0.0.1:8080'
+GEPHI_WS = 'workspace0'

@@ -6,7 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import pymongo
 from scrapy.exceptions import DropItem, CloseSpider
-
+from GephiStreamer import Node, Edge, GephiStreamerManager
 
 class DuplicatesPipeline(object):
 
@@ -19,6 +19,64 @@ class DuplicatesPipeline(object):
         else:
             self.ids_seen.add(item['publication_number'])
             return item
+
+
+class GephiPipeline(object):
+
+    def __init__(self, gephi_uri, gephi_ws):
+        self.gephi_uri = gephi_uri
+        self.gephi_ws = gephi_ws
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(
+            gephi_uri=crawler.settings.get('GEPHI_URI'),
+            gephi_ws=crawler.settings.get('GEPHI_WS')
+        )
+
+    def open_spider(self, spider):
+        self.gephi = GephiStreamerManager(iGephiUrl=self.gephi_uri, iGephiWorkspace=self.gephi_ws)
+
+    def close_spider(self, spider):
+        pass
+
+    def process_item(self, item, spider):
+        patent_color = {'red': 0, 'green': 0, 'blue': 1}
+        patent_node = Node(item['publication_number'], **patent_color)
+        try:
+            patent_node.property['title'] = item['title']
+            patent_node.property['filing_date'] = item['filing_date']
+            patent_node.property['publication_date'] = item['publication_date']
+            patent_node.property['priority_date'] = item['priority_date']
+            patent_node.property['grant_date'] = item['grant_date']
+            patent_node.property['pdf'] = item['pdf']
+        except KeyError:
+            pass
+
+        for citation in item['citations']:
+            citation_node = Node(citation, **patent_color)
+            self.gephi.add_node(citation_node)
+            self.gephi.add_edge(Edge(patent_node, citation_node, True))
+
+        for cited_by in item['cited_by']:
+            cited_by_node = Node(cited_by, **patent_color)
+            self.gephi.add_node(cited_by_node)
+            self.gephi.add_edge(Edge(cited_by_node, patent_node, True))
+
+        inventor_color = {'red': 1, 'green': 0, 'blue': 0}
+        for inventor in item['inventors']:
+            inventor_node = Node(inventor, **inventor_color)
+            self.gephi.add_node(inventor_node)
+            self.gephi.add_edge(Edge(patent_node, inventor_node, False))
+
+        assignee_color = {'red': 1, 'green': 0, 'blue': 0}
+        for assignee in item['assignees']:
+            assignee_node = Node(assignee, **assignee_color)
+            self.gephi.add_node(assignee_node)
+            self.gephi.add_edge(Edge(patent_node, assignee_node, False))
+
+        import ipdb; ipdb.set_trace() ### XXX BREAKPOINT
+        return item
 
 
 class MongoPipeline(object):
