@@ -48,39 +48,36 @@ class GephiPipeline(object):
         pass
 
     def process_item(self, item, spider):
-        patent_color = {'red': 0, 'green': 0, 'blue': 1}
-        patent_node = Node(item['publication_number'], **patent_color)
-        try:
-            patent_node.property['title'] = item['title']
-            patent_node.property['filing_date'] = item['filing_date']
-            patent_node.property['publication_date'] = item['publication_date']
-            patent_node.property['priority_date'] = item['priority_date']
-            patent_node.property['grant_date'] = item['grant_date']
-            patent_node.property['pdf'] = item['pdf']
-        except KeyError:
-            pass
+        patent_args = {'size': 10, 'red': 0, 'green': 0, 'blue': 1}
+        patent_node = Node(item['publication_number'], **patent_args)
+        patent_node.property['title'] = item.get('title')
+        patent_node.property['filing_date'] = item.get('filing_date')
+        patent_node.property['publication_date'] = item.get('publication_date')
+        patent_node.property['priority_date'] = item.get('priority_date')
+        patent_node.property['grant_date'] = item.get('grant_date')
+        patent_node.property['pdf'] = item.get('pdf')
 
-        for citation in item.get('citations'):
-            citation_node = Node(citation, **patent_color)
+        for citation in item.get('citations', []):
+            citation_node = Node(citation, **patent_args)
             self.gephi.add_node(citation_node)
             self.gephi.add_edge(Edge(patent_node, citation_node, True))
 
-        for cited_by in item.get('cited_by'):
-            cited_by_node = Node(cited_by, **patent_color)
+        for cited_by in item.get('cited_by', []):
+            cited_by_node = Node(cited_by, **patent_args)
             self.gephi.add_node(cited_by_node)
             self.gephi.add_edge(Edge(cited_by_node, patent_node, True))
 
-        inventor_color = {'red': 1, 'green': 0, 'blue': 0}
-        for inventor in item.get('inventors'):
-            inventor_node = Node(inventor, **inventor_color)
+        inventor_args = {'size': 5, 'red': 1, 'green': 0, 'blue': 0}
+        for inventor in item.get('inventors', []):
+            inventor_node = Node(inventor, **inventor_args)
             self.gephi.add_node(inventor_node)
-            self.gephi.add_edge(Edge(patent_node, inventor_node, False))
+            self.gephi.add_edge(Edge(inventor_node, patent_node, True))
 
-        assignee_color = {'red': 0, 'green': 1, 'blue': 0}
-        for assignee in item.get('assignees'):
-            assignee_node = Node(assignee, **assignee_color)
+        assignee_args = {'size': 5, 'red': 0, 'green': 1, 'blue': 0}
+        for assignee in item.get('assignees', []):
+            assignee_node = Node(assignee, **assignee_args)
             self.gephi.add_node(assignee_node)
-            self.gephi.add_edge(Edge(patent_node, assignee_node, False))
+            self.gephi.add_edge(Edge(assignee_node, patent_node, True))
 
         try:
             self.gephi.commit()

@@ -11,86 +11,22 @@ from app.loaders import GooglePatentsLoader
 logger = logging.getLogger(__name__)
 
 
-class GooglePatentsSpider(Spider):
-    name = 'google_patents'
+class GooglePatentsInitialSpider(Spider):
+    name = 'google_patents_initial'
     allowed_domaines = ['patents.google.com']
-    search_url = 'https://patents.google.com/xhr/query?%s'
     patent_url = 'https://patents.google.com/xhr/result?lang=en&patent_id=%s'
     image_url = 'https://patentimages.storage.googleapis.com/%s'
-    query = {
-        'q': {
-            'kg': [
-                {'kw': [
-                    {'text': 'stirling'},
-                    {'text': 'heating'}]},
-                {'kw': [
-                    {'text': 'engine'},
-                    {'text': 'generator'},
-                    {'text': 'machine'},
-                    {'text': 'system'}]},
-                {'kw': [
-                    {'text': 'home'},
-                    {'text': 'house'},
-                    {'text': 'habitat'},
-                    {'text': 'domestic'}]},
-                {'kw': [
-                    {'text': 'energy'},
-                    {'text': 'electricity'},
-                    {'text': 'electric'},
-                    {'text': 'current supply'}]},
-                {'kw': [
-                    {'text': 'kilowatt'},
-                    {'text': '1kW'}]},
-                {'kw': [
-                    {'text': 'independant'}]},
-                {'kw': [
-                    {'text': '-vehicle'}]}
-            ],
-            'clustered_restrict': False,
-            'page': 0
-        }
-    }
-
-    def query_string(self, query):
-        return urllib.urlencode(query).replace('%27', '%22').replace('+', '').replace('False', 'false')
+    interesting_patents = [
+      'US20110025055A1',
+      'US4498298A',
+      'CA2468459A1'
+    ]
 
     def start_requests(self):
-        for page in range(0, 100):
-            query = self.query
-            query['q']['page'] = page
-            yield self.make_requests_from_url(self.search_url % self.query_string(query))
+        for patent in self.interesting_patents:
+            yield self.make_requests_from_url(self.patent_url % patent)
 
     def parse(self, response):
-        try:
-            results = json.loads(response.body_as_unicode())['results']
-            logger.info('Parsing page %d', results['num_page'])
-        except KeyError, e:
-            logger.error(e)
-            yield None
-
-        clusters = results.pop('cluster')
-        for cluster in clusters:
-            try:
-                patents = cluster['result']
-            except KeyError, e:
-                logger.error(e)
-                continue
-
-            for patent in patents:
-                try:
-                    patent = patent['patent']
-                    patent_number = patent['publication_number']
-                except KeyError, e:
-                    logger.error(e)
-                    continue
-
-                if patent_number:
-                    yield Request(
-                        url=self.patent_url % patent_number,
-                        callback=self.parse_patent
-                    )
-
-    def parse_patent(self, response):
         loader = GooglePatentsLoader(response=response)
 
         loader.add_css('publication_number', '.knowledge-card h2::text')

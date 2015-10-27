@@ -14,6 +14,8 @@ BOT_NAME = 'app'
 SPIDER_MODULES = ['app.spiders']
 NEWSPIDER_MODULE = 'app.spiders'
 
+LOGFILE = 'scrapy.log'
+LOGLEVEL = 'INFO'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'app (+http://www.yourdomain.com)'
@@ -94,7 +96,7 @@ MONGO_URI = '127.0.0.1:27017'
 MONGO_DATABASE = 'patents'
 
 # Configure CloseSpider Pipeline
-CLOSESPIDER_ITEMCOUNT = 1000
+CLOSESPIDER_ITEMCOUNT = 10
 
 # Configure GephiStreamer in GephiPipeline
 GEPHI_URI = '127.0.0.1:8080'
