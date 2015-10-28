@@ -32,6 +32,7 @@ class GephiPipeline(object):
     def __init__(self, gephi_uri, gephi_ws):
         self.gephi_uri = gephi_uri
         self.gephi_ws = gephi_ws
+        self.nodes = set()
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -48,42 +49,49 @@ class GephiPipeline(object):
         pass
 
     def process_item(self, item, spider):
-        patent_args = {'size': 5, 'red': 0, 'green': 0, 'blue': 1}
+        patent_args = {'size': 5, 'red': 1, 'green': 0, 'blue': 0}
         patent_node = Node(item['publication_number'], **patent_args)
+        patent_node.property['type'] = 'patent'
         patent_node.property['title'] = item.get('title')
         patent_node.property['filing_date'] = item.get('filing_date')
         patent_node.property['publication_date'] = item.get('publication_date')
         patent_node.property['priority_date'] = item.get('priority_date')
         patent_node.property['grant_date'] = item.get('grant_date')
         patent_node.property['pdf'] = item.get('pdf')
+        if item['publication_number'] in self.nodes:
+            self.gephi.change_node(patent_node)
+        else:
+            self.gephi.add_node(patent_node)
 
+        link_args = {'size': 5, 'red': 0, 'green': 0, 'blue': 1}
         for citation in item.get('citations', []):
-            citation_node = Node(citation, **patent_args)
+            citation_node = Node(citation, **link_args)
+            citation_node.property['type'] = 'link'
             self.gephi.add_node(citation_node)
             self.gephi.add_edge(Edge(patent_node, citation_node, True))
+            self.nodes.add(citation)
 
         for cited_by in item.get('cited_by', []):
-            cited_by_node = Node(cited_by, **patent_args)
+            cited_by_node = Node(cited_by, **link_args)
+            cited_by_node.property['type'] = 'link'
             self.gephi.add_node(cited_by_node)
             self.gephi.add_edge(Edge(cited_by_node, patent_node, True))
+            self.nodes.add(cited_by)
 
-        inventor_args = {'size': 5, 'red': 1, 'green': 0, 'blue': 0}
-        for inventor in item.get('inventors', []):
-            inventor_node = Node(inventor, **inventor_args)
-            self.gephi.add_node(inventor_node)
-            self.gephi.add_edge(Edge(inventor_node, patent_node, True))
-
-        assignee_args = {'size': 5, 'red': 0, 'green': 1, 'blue': 0}
-        for assignee in item.get('assignees', []):
-            assignee_node = Node(assignee, **assignee_args)
-            self.gephi.add_node(assignee_node)
-            self.gephi.add_edge(Edge(assignee_node, patent_node, True))
+        entity_args = {'size': 5, 'red': 0, 'green': 1, 'blue': 0}
+        entities = set(item.get('inventors', []) + item.get('assignees', []))
+        for entity in entities:
+            entity_node = Node(entity, **entity_args)
+            entity_node.property['type'] = 'entity'
+            self.gephi.add_node(entity_node)
+            self.gephi.add_edge(Edge(entity_node, patent_node, True))
 
         try:
             self.gephi.commit()
         except ConnectionError, e:
             logger.error(e)
 
+        self.nodes.add(item['publication_number'])
         return item
 
 
