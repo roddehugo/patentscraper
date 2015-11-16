@@ -16,8 +16,12 @@ class GooglePatentsInitialSpider(Spider):
     image_url = 'https://patentimages.storage.googleapis.com/%s'
     interesting_patents = [
         'US20110025055A1',
-        'US4498298A',
-        'CA2468459A1'
+        'CA2468459A1',
+        'US7459799',
+        'US20050052029',
+        'EP1456590B1',
+        'US6971236',
+        'US6161381'
     ]
 
     def start_requests(self):
