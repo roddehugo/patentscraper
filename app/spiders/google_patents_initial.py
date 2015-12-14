@@ -14,14 +14,19 @@ class GooglePatentsInitialSpider(Spider):
     allowed_domaines = ['patents.google.com']
     patent_url = 'https://patents.google.com/xhr/result?lang=en&patent_id=%s'
     image_url = 'https://patentimages.storage.googleapis.com/%s'
+    # interesting_patents = [
+        # 'US20110025055A1',
+        # 'CA2468459A1',
+        # 'US7459799',
+        # 'US20050052029',
+        # 'EP1456590B1',
+        # 'US6971236',
+        # 'US6161381'
+    # ]
     interesting_patents = [
-        'US20110025055A1',
-        'CA2468459A1',
-        'US7459799',
-        'US20050052029',
-        'EP1456590B1',
-        'US6971236',
-        'US6161381'
+        'US3520285',
+        'US3431788',
+        'US20060283186'
     ]
 
     def start_requests(self):
