@@ -112,7 +112,8 @@ class MongoPipeline(object):
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
         self.collection_name = spider.name
-        self.collection_name.drop()
+        if self.collection_name in self.db.collection_names():
+            self.collection_name.drop()
 
     def close_spider(self, spider):
         self.client.close()
