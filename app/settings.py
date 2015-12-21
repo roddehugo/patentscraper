@@ -96,7 +96,7 @@ MONGO_URI = '127.0.0.1:27017'
 MONGO_DATABASE = 'patents'
 
 # Configure CloseSpider Pipeline
-CLOSESPIDER_ITEMCOUNT = 10
+#  CLOSESPIDER_ITEMCOUNT = 10
 
 # Configure GephiStreamer in GephiPipeline
 GEPHI_URI = '127.0.0.1:8080'

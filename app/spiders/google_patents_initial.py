@@ -2,6 +2,7 @@
 import json
 import logging
 from scrapy.spiders import Spider
+from scrapy.http import Request
 
 from app.loaders import GooglePatentsLoader
 
@@ -24,21 +25,36 @@ class GooglePatentsInitialSpider(Spider):
         # 'US6161381'
     # ]
     interesting_patents = [
+        # Piston
+        'US4458489',
+        'US4036018',
+        'US4669736',
+        'US8215112',
+        'US20150167567',
+        'WO2015138953',
+        'WO1983002300',
+        # Rhombic
         'US3520285',
         'US3431788',
-        'US20060283186'
+        'US20060283186',
+        # Vilebrequin
+        'US5816201',
     ]
+    MAX_DEPTH = 1
 
     def start_requests(self):
         for patent_number in self.interesting_patents:
-            yield self.make_requests_from_url(self.patent_url % patent_number)
+            yield Request(
+                url=self.patent_url % patent_number,
+                callback=self.parse,
+                meta={'depth': 0}
+            )
 
     def parse(self, response):
         loader = GooglePatentsLoader(response=response)
 
         loader.add_css('publication_number', '.knowledge-card h2::text')
         loader.add_css('title', '#title::text')
-        logger.info('Parsing patent %s', loader.get_output_value('publication_number'))
 
         dates = loader.get_css('.key-dates dd *::text')
         try:
@@ -71,19 +87,28 @@ class GooglePatentsInitialSpider(Spider):
         except (IndexError, ValueError):
             pass
 
-        loader.add_css('citations', '#patentCitations+table tbody td a::text')
-        loader.add_css('cited_by', '#citedBy+table tbody td a::text')
         loader.add_css('legal_events', '#legalEvents+table tbody td.nowrap::text')
 
         loader.add_css('abstract', '#abstract .abstract::text')
         loader.add_css('description', '#descriptionText *::text')
         loader.add_css('claims', '#claimsText *::text')
+        loader.add_value('depth', response.meta['depth'])
 
-        patents_linked = \
-            loader.get_output_value('citations') + \
-            loader.get_output_value('cited_by')
+        if response.meta['depth'] < self.MAX_DEPTH:
+            loader.add_css('citations', '#patentCitations+table tbody td a::text')
+            loader.add_css('cited_by', '#citedBy+table tbody td a::text')
+            patents_linked = \
+                loader.get_output_value('citations') + \
+                loader.get_output_value('cited_by')
 
-        for patent_number in patents_linked:
-            yield self.make_requests_from_url(self.patent_url % patent_number)
+            for patent_number in patents_linked:
+                yield Request(
+                    url=self.patent_url % patent_number,
+                    callback=self.parse,
+                    meta={'depth': response.meta['depth'] + 1}
+                )
 
+        logger.error('Patent %s at depth %d',
+                    loader.get_output_value('publication_number'),
+                    loader.get_output_value('depth'))
         yield loader.load_item()

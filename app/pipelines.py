@@ -113,7 +113,7 @@ class MongoPipeline(object):
         self.db = self.client[self.mongo_db]
         self.collection_name = spider.name
         if self.collection_name in self.db.collection_names():
-            self.collection_name.drop()
+            self.db[self.collection_name].drop()
 
     def close_spider(self, spider):
         self.client.close()

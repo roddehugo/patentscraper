@@ -24,3 +24,6 @@ class GooglePatentsLoader(ItemLoader):
     abstract_out = Join()
     description_out = Join()
     claims_out = Join()
+
+    depth_in = Identity()
+    depth_out = TakeFirst()

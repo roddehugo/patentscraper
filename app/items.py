@@ -28,3 +28,4 @@ class GooglePatentsItem(Item):
     abstract = Field()
     description = Field()
     claims = Field()
+    depth= Field()
