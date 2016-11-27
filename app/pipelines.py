@@ -6,22 +6,21 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import logging
 import pymongo
+
 from requests.exceptions import ConnectionError
 from scrapy.exceptions import DropItem
 from GephiStreamer import Node, Edge, GephiStreamerManager
 
 
-logger = logging.getLogger(__name__)
-
-
 class DuplicatesPipeline(object):
 
     def __init__(self):
+        self.logger = logging.getLogger(type(self).__name__)
         self.ids_seen = set()
 
     def process_item(self, item, spider):
         if item['publication_number'] in self.ids_seen:
-            raise DropItem("Duplicate item found: %s" % item)
+            raise DropItem('Duplicated item found: {}'.format(item['publication_number']))
         else:
             self.ids_seen.add(item['publication_number'])
             return item
@@ -30,6 +29,7 @@ class DuplicatesPipeline(object):
 class GephiPipeline(object):
 
     def __init__(self, gephi_uri, gephi_ws):
+        self.logger = logging.getLogger(type(self).__name__)
         self.gephi_uri = gephi_uri
         self.gephi_ws = gephi_ws
         self.nodes = set()
@@ -43,7 +43,7 @@ class GephiPipeline(object):
 
     def open_spider(self, spider):
         self.gephi = GephiStreamerManager(iGephiUrl=self.gephi_uri, iGephiWorkspace=self.gephi_ws)
-        logger.info('GephiStream connected %s', self.gephi)
+        self.logger.info('GephiStream connected {}'.format(self.gephi_uri))
 
     def close_spider(self, spider):
         pass
@@ -86,10 +86,12 @@ class GephiPipeline(object):
             self.gephi.add_node(entity_node)
             self.gephi.add_edge(Edge(entity_node, patent_node, True))
 
+        self.logger.info('Publishing item {}'.format(item['publication_number']))
+
         try:
             self.gephi.commit()
         except ConnectionError, e:
-            logger.error(e)
+            self.logger.error(e)
 
         self.nodes.add(item['publication_number'])
         return item
@@ -98,6 +100,7 @@ class GephiPipeline(object):
 class MongoPipeline(object):
 
     def __init__(self, mongo_uri, mongo_db):
+        self.logger = logging.getLogger(type(self).__name__)
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
 
@@ -112,12 +115,15 @@ class MongoPipeline(object):
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
         self.collection_name = spider.name
+        self.logger.info('MongoClient connected {} using db \'{}\' and collection \'{}\''.format(self.mongo_uri, self.mongo_db, self.collection_name))
         if self.collection_name in self.db.collection_names():
+            self.logger.info('Dropping collection \'{}\''.format(self.collection_name))
             self.db[self.collection_name].drop()
 
     def close_spider(self, spider):
         self.client.close()
 
     def process_item(self, item, spider):
+        self.logger.info('Storing item {}'.format(item['publication_number']))
         self.db[self.collection_name].insert(dict(item))
         return item
