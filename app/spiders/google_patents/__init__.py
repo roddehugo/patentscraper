@@ -70,7 +70,7 @@ class GooglePatentsSpider(Spider):
             date = html.css('*[itemprop=date]::text').extract_first()
             code = html.css('*[itemprop=code]::text').extract_first()
             title = html.css('*[itemprop=title]::text').extract_first()
-            loader.add_value('legal_events', u'({}) {}: {}'.format(date, code, desc))
+            loader.add_value('legal_events', u'({}) {}: {}'.format(date, code, title))
 
         loader.add_css('abstract', 'section[itemprop=abstract] .abstract::text')
         loader.add_css('description', 'section[itemprop=description] .description-line::text')
