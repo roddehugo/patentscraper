@@ -1,0 +1,64 @@
+{
+  "type": "network",
+  "version": "1.0",
+  "data": "data.json",
+  "text": {
+    "maintitle": "EI04",
+    "title": "Brevets Composants"
+  },
+  "legend": {
+    "edgeLabel": "Citations",
+    "colorLabel": "Modularity Class",
+    "nodeLabel": "Patents, Entities"
+  },
+  "classes": {
+    "0": "Free piston stirling engine",
+    "1": "Linear Motor and Controller",
+    "2": "Stirling engine with improved sealing piston ring assembly",
+    "3": "Opposed piston engine",
+    "4": "Stirling cycle machines",
+    "5": "Piston rod guide for rhombic drive stirling cycle apparatus",
+    "6": "Cantilevered crankshaft stirling cycle machine",
+    "7": "Piston for engines",
+    "8": "Shaft seal mechanism of multi-cylinder stirling engine",
+    "9": "Vuilleumier heat pump",
+    "10": "Apparatus and method of providing facility information",
+    "11": "Engine with an offset crankshaft",
+    "12": "Engine control systems and methods",
+    "13": "Stirling cycle cryogenic cooler",
+    "14": "14"
+  },
+  "features": {
+    "search": true,
+    "groupSelectorAttribute": "Modularity Class",
+    "hoverBehavior": "dim"
+  },
+  "informationPanel": {
+    "imageAttribute": false,
+    "groupByEdgeDirection": false
+  },
+  "sigma": {
+    "graphProperties": {
+      "minEdgeSize": 0.2,
+      "maxNodeSize": 7,
+      "maxEdgeSize": 0.5,
+      "minNodeSize": 1
+    },
+    "drawingProperties": {
+      "labelThreshold": 10,
+      "hoverFontStyle": "bold",
+      "defaultEdgeType": "curve",
+      "defaultLabelColor": "#000",
+      "defaultLabelHoverColor": "#fff",
+      "defaultLabelSize": 14,
+      "activeFontStyle": "bold",
+      "fontStyle": "bold",
+      "defaultHoverLabelBGColor": "#002147",
+      "defaultLabelBGColor": "#ddd"
+    },
+    "mouseProperties": {
+      "minRatio": 0.75,
+      "maxRatio": 20
+    }
+  }
+}

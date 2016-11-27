@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <title>Patents Explorer</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- CSS for Sigma elements -->
+    <link rel="stylesheet" href="css/sigma.css"/>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <body>
+      <div class="sigma-parent">
+        <div class="sigma-expand" id="sigma-canvas"></div>
+      </div>
+      <div id="mainpanel">
+        <div class="col">
+          <div id="maintitle"></div>
+          <div id="title"></div>
+          <div id="legend">
+            <div class="box">
+              <h3>Legend:</h3>
+              <dl>
+                <dt class="node"></dt>
+                <dd></dd>
+                <dt class="edge"></dt>
+                <dd></dd>
+                <dt class="colours"></dt>
+                <dd></dd>
+              </dl>
+            </div>
+          </div>
+          <div class="b1">
+            <form>
+              <div id="search" class="cf">
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="Search" name="search">
+                  <div class="input-group-btn">
+                    <button class="btn btn-default" type="submit"><span class="state"></span></button>
+                  </div>
+                </div>
+                <div class="results"></div>
+              </div>
+              <div class="cf" id="attributeselect">
+                <div class="select"></div>
+                <div class="list cf"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div id="information">
+        </div>
+      </div>
+      <div id="zoom">
+        <div class="z" rel="in"></div> <div class="z" rel="out"></div> <div class="z" rel="center"></div>
+      </div>
+      </div>
+      <div id="attributepane">
+        <div class="text">
+          <div title="Close" class="left-close returntext"><div class="c cf"><span>Return to the full network</span></div></div>
+          <div class="nodeattributes">
+            <div class="name"></div>
+            <div class="data"></div>
+            <div class="p">Connections:</div>
+            <div class="link">
+              <ul>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bootstrap core JavaScript -->
+      <!-- Placed at the end of the document so the pages load faster -->
+      <script src="js/jquery/jquery.min.js"></script>
+      <script src="js/bootstrap/bootstrap.min.js"></script>
+      <!-- Sigma core JavaScript -->
+      <script src="js/sigma/sigma.min.js"></script>
+      <script src="js/sigma/sigma.parseJson.js"></script>
+      <!-- Our Sigma config script -->
+      <script src="js/sigma.js"></script>
+    </body>
+</html>
